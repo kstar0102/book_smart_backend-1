@@ -719,6 +719,7 @@ exports.acknowledgeNewTerms = async (req, res) => {
 // Test FCM notification (for debugging)
 exports.testFCMNotification = async (req, res) => {
     console.log('Test FCM Notification');
+    console.log('Test FCM Notification');
   try {
     const { token, type } = req.body; // type: 'clinician' or 'facility'
     
