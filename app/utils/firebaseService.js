@@ -1,9 +1,15 @@
 const admin = require('firebase-admin');
 const serviceAccount = require("../../serviceAccountKey.json");
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
+// Check if Firebase is already initialized to avoid re-initialization errors
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+    console.log('Firebase Admin initialized with project:', serviceAccount.project_id);
+} else {
+    console.log('Firebase Admin already initialized');
+}
 
 exports.sendNotification = async (token, title, body, data = {}) => {
     // Convert all data values to strings (FCM requirement)
@@ -38,6 +44,15 @@ exports.sendNotification = async (token, title, body, data = {}) => {
         if (error.code === 'messaging/invalid-registration-token' || 
             error.code === 'messaging/registration-token-not-registered') {
             console.error("Token is invalid or not registered. Token:", token.substring(0, 20) + "...");
+        }
+        
+        // Handle SenderId mismatch error specifically
+        if (error.code === 'messaging/mismatched-credential') {
+            console.error("CRITICAL: SenderId mismatch detected!");
+            console.error("This means the FCM token was generated for a different Firebase project.");
+            console.error("The token was generated for a different project than the service account key being used.");
+            console.error("Solution: Ensure the serviceAccountKey.json matches the Firebase project used by the mobile app.");
+            console.error("Current service account project_id:", serviceAccount.project_id);
         }
         
         return { success: false, error: error.message, code: error.code };
